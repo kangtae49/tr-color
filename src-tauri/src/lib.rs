@@ -5,7 +5,7 @@ mod utils;
 use tauri_specta::{collect_commands, Builder};
 use crate::color::{Rgb, Pos, ColorsJson};
 use crate::err::Result;
-use crate::utils::get_resource_path;
+
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 
 #[tauri::command]
@@ -47,6 +47,7 @@ pub fn run() {
         use specta_typescript::BigIntExportBehavior;
         use specta_typescript::Typescript;
         use std::path::Path;
+        use crate::utils::get_resource_path;
         // use specta::TypeCollection;
         // use std::fs::OpenOptions;
         // use std::io::Write;
