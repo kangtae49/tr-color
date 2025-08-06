@@ -1,0 +1,11 @@
+{
+  "$schema": "./colors.schema.json",
+  "colors": [
+    {
+      "hex_color": "#ffc233"
+    },
+    {
+      "hex_color": "#008080"
+    }
+  ]
+}

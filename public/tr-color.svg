@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   viewBox="0 0 512 512"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="tr-color.svg"
+   inkscape:version="1.4.2 (f4327f4, 2025-05-13)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1" />
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="1.5917969"
+     inkscape:cx="256"
+     inkscape:cy="244.0638"
+     inkscape:window-width="1904"
+     inkscape:window-height="1001"
+     inkscape:window-x="39"
+     inkscape:window-y="124"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg1" />
+  <!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc. -->
+  <path
+     d="m 130.79715,500.7092 c -57.455914,0 -109.429053,-52.02788 -109.429053,-102.97949 0,-36.37338 56.656906,-102.12782 86.931123,-144.13041 9.76589,-13.56785 34.20506,-13.01076 43.97094,0.55708 30.43699,42.0026 85.04886,106.08577 85.04886,142.45915 0,50.9516 -49.06595,104.09367 -106.52187,104.09367 z"
+     id="path1"
+     sodipodi:nodetypes="ssccss"
+     style="stroke-width:1.53275;fill:#008080;fill-opacity:1" />
+  <path
+     d="m 205.49174,236.73251 c -52.70578,0 -65.72978,-14.06311 -65.72978,-62.28955 0,-17.21397 54.26725,-69.00771 90.24274,-92.852694 C 287.30009,43.614204 344.22493,12.883558 422.18911,6.8263916 553.99869,4.1414756 503.42162,29.079627 377.70061,134.53781 340.75206,165.53126 258.19752,236.73251 205.49174,236.73251 Z"
+     id="path1-4"
+     sodipodi:nodetypes="ssacss"
+     style="stroke-width:1.42823;fill:#ffc233;fill-opacity:1" />
+</svg>

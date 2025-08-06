@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ColorsJson",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "colors": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Color"
+      }
+    }
+  },
+  "required": [
+    "colors"
+  ],
+  "$defs": {
+    "Color": {
+      "type": "object",
+      "properties": {
+        "hex_color": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "hex_color"
+      ]
+    }
+  }
+}
