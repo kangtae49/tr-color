@@ -121,8 +121,6 @@ function ColorView() {
   const colorName = useColorNameStore(state => state.colorName);
   const setColorName = useColorNameStore(state => state.setColorName);
 
-  // const [activeItem, setActiveItem] = useState<string | null>(null);
-  // const [dropItems, setDropItems] = useState<string[]>([]);
 
   const getPos = async () => {
     return commands.getMousePos().then((res) => {
@@ -146,7 +144,6 @@ function ColorView() {
         setInputX(pos.x);
         setInputY(pos.y);
         getColor(pos).then((color) => {
-          console.log(color);
           if (color === undefined) return;
           setInputColor(fromColor(color));
         });
@@ -219,20 +216,8 @@ function ColorView() {
   const onChangeInputY = (y: string | undefined) => { setInputY(parseInteger(y)) }
 
   const handleKeyDown = (e: KeyboardEvent) => {
-    console.log(`Key pressed: ${e.key}`);
     if (e.key == 'Alt') {
       getMouseColor();
-      // getPos().then((pos) => {
-      //   if (pos) {
-      //     setInputX(pos.x);
-      //     setInputY(pos.y);
-      //     getColor(pos).then((color) => {
-      //       console.log(color);
-      //       if (color === undefined) return;
-      //       setInputColor(fromColor(color));
-      //     });
-      //   }
-      // });
     }
   }
 
@@ -255,12 +240,7 @@ function ColorView() {
     }
   }
 
-  const selectColorItem = (c: ColorItem) => {
-    console.log('select color item: ', c);
-    if (c === undefined) return;
-    setInputColor(c.hex_color);
-    setColorName(c.name || "");
-  }
+
 
   const removeColorItem = (colorItem: ColorItem) => {
     if (colorItems === undefined) return;
@@ -277,16 +257,14 @@ function ColorView() {
     const findItem = colorItems?.find((c) => c.id == event.active.id);
     if (findItem) {
       setInputColor(findItem.hex_color);
+      setColorName(findItem.name || "");
     }
 
   }
 
   function handleDragEnd(event: DragEndEvent) {
-    // setActiveItem(null);
-    // console.log(activeItem, colorItems);
     if (colorItems === undefined) return;
     const { active, over } = event;
-    console.log(active, over);
 
     if (!over) {
       return;
@@ -295,23 +273,24 @@ function ColorView() {
     let activeId = active.id.toString();
     let overId = over.id.toString();
 
+    if (activeId == "DRAGGABLE" && currentColorItem !== undefined) {
+      if (!colorItems.find((c) => c.id == getColorId(currentColorItem))) {
+        colorItems.push(currentColorItem);
+        // setColorItems(colorItems);
+        activeId = getColorId(currentColorItem);
+      }
+    }
     if (overId == 'target') {
       const last = colorItems.slice(-1);
       if (last.length > 0) {
         overId = last[0].id;
       }
     }
-    if (activeId == "DRAGGABLE" && currentColorItem !== undefined) {
-      if (!colorItems.find((c) => c.id == getColorId(currentColorItem))) {
-        colorItems.push(currentColorItem);
-        activeId = currentColorItem.id;
-      }
-    }
-
     const activeIndex = colorItems.findIndex((item) => item.id === activeId);
     const overIndex = colorItems.findIndex((item) => item.id === overId);
-    if (activeIndex !== -1 && overIndex !== -1 && activeId !== overId) {
-      setColorItems((items) => arrayMove<ColorItem>(items || [], activeIndex, overIndex));
+    if (activeIndex !== -1 && overIndex !== -1) {
+      const sortedItem = arrayMove<ColorItem>(colorItems || [], activeIndex, overIndex);
+      setColorItems(sortedItem);
     }
 
   }
@@ -353,7 +332,6 @@ function ColorView() {
     if (colorsJson?.colors === undefined) return;
     const colorItems: ColorItem[] = colorsJson.colors.map( (c: Color) => {
       let colorId = getColorId(c);
-      console.log('colorId:', colorId);
 
       return ({
         id: colorId,
@@ -365,7 +343,6 @@ function ColorView() {
 
   useEffect(() => {
     if (colorItems == undefined) return;
-
     commands.writeColors({
       colors: colorItems
     }).then((res) => {
@@ -419,18 +396,20 @@ function ColorView() {
             />
           </div>
           )}
-        <SortableContainer id="target">
-          <div className="color-list">
-              <SortableContext items={colorItems ?? []} strategy={horizontalListSortingStrategy}>
-              {(colorItems ?? []).map((color, _index: number) => {
-                return (
-                  <ColorItemView key={color.id} color={color} removeColorItem={removeColorItem} />
-                )
-              })}
-              </SortableContext>
-          </div>
-        </SortableContainer>
-      </DndContext>
+        { (colorItems != undefined) && (
+          <SortableContainer id="target">
+            <div className="color-list">
+                <SortableContext items={colorItems} strategy={horizontalListSortingStrategy}>
+                {(colorItems).map((color, _index: number) => {
+                  return (
+                    <ColorItemView key={color.id} color={color} removeColorItem={removeColorItem} />
+                  )
+                })}
+                </SortableContext>
+            </div>
+          </SortableContainer>
+        )}
+        </DndContext>
     </div>
   )
 }

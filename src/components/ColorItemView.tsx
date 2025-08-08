@@ -9,7 +9,6 @@ type Props = {
   removeColorItem: (colorItem: ColorItem) => void
 }
 function ColorItemView({color, removeColorItem}: Props) {
-  console.log('ColorItemView', color);
   const sortable = useSortable({
     id: color.id,
   });
