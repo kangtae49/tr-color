@@ -1,7 +1,13 @@
 import {useEffect, useState} from "react";
 import {Rgb, commands, Pos, Color, ColorsJson} from "../bindings.ts";
 import { FontAwesomeIcon as Icon } from '@fortawesome/react-fontawesome'
-import { faArrowsRotate, faSquarePlus, faCircleXmark } from '@fortawesome/free-solid-svg-icons'
+import {faArrowsRotate, faSquarePlus} from '@fortawesome/free-solid-svg-icons'
+import SortableContainer from "@/components/SortableContainer.tsx";
+import {arrayMove, horizontalListSortingStrategy, SortableContext} from "@dnd-kit/sortable";
+import {DndContext, DragEndEvent, DragStartEvent} from "@dnd-kit/core";
+import ColorItemView from "@/components/ColorItemView.tsx";
+import ColorCurItemView from "@/components/ColorCurItemView.tsx";
+import {useColorNameStore} from "@/stores/colorNameStore.ts";
 
 
 function fromColor(rgb: Rgb): string {
@@ -94,6 +100,10 @@ function hslToRgb(hsl: Hsl): Rgb {
   };
 }
 
+export type ColorItem = Color & {
+  id: string
+}
+
 function ColorView() {
   const [inputColor, setInputColor] = useState<string | undefined>("#000000");
   const [inputHexString, setInputHexString] = useState<string | undefined>("#000000");
@@ -106,6 +116,13 @@ function ColorView() {
   const [inputX, setInputX] = useState<number | undefined>(0);
   const [inputY, setInputY] = useState<number | undefined>(0);
   const [colorsJson, setColorsJson] = useState<ColorsJson | undefined>(undefined);
+  const [colorItems, setColorItems] = useState<ColorItem[] | undefined>(undefined);
+  const [currentColorItem, setCurrentColorItem] = useState<ColorItem | undefined>(undefined);
+  const colorName = useColorNameStore(state => state.colorName);
+  const setColorName = useColorNameStore(state => state.setColorName);
+
+  // const [activeItem, setActiveItem] = useState<string | null>(null);
+  // const [dropItems, setDropItems] = useState<string[]>([]);
 
   const getPos = async () => {
     return commands.getMousePos().then((res) => {
@@ -226,39 +243,84 @@ function ColorView() {
       }
     });
   }
-  const saveColorsJson = () => {
-    if (inputColor === undefined) return;
-    let colors = colorsJson?.colors;
-    if (colors == undefined) colors = [];
-    const hex_colors = colors.map((color: Color) => color.hex_color);
-    if (!hex_colors.includes(inputColor)) {
-      colors = [...colors, {
-        hex_color: inputColor,
-      }]
+  const addColor = () => {
+    if (colorItems == undefined || currentColorItem === undefined) return;
+
+
+    if (!colorItems.find((color) => color.id === currentColorItem.id)) {
+      setColorItems([
+        currentColorItem,
+        ...colorItems,
+      ])
     }
-    commands.writeColors({
-      colors
-    }).then((res) => {
-      if (res.status == 'ok') {
-        console.log('save colors');
-        readColors();
-      }
-    });
   }
 
-  const removeColor = (hexColor: string) => {
-    if (colorsJson === undefined) return;
-    let colors = colorsJson.colors;
-    if (colors === undefined) return;
-    colors = colors.filter((color: Color) => color.hex_color !== hexColor);
-    commands.writeColors({
-      colors
-    }).then((res) => {
-      if (res.status == 'ok') {
-        console.log('remove color');
-        readColors();
+  const selectColorItem = (c: ColorItem) => {
+    console.log('select color item: ', c);
+    if (c === undefined) return;
+    setInputColor(c.hex_color);
+    setColorName(c.name || "");
+  }
+
+  const removeColorItem = (colorItem: ColorItem) => {
+    if (colorItems === undefined) return;
+    console.log('remove color: ', colorItem);
+    setColorItems(colorItems.filter((item: ColorItem) => item.id !== colorItem.id));
+  }
+
+  function handleDragStart(event: DragStartEvent) {
+    console.log(event);
+    if (event.active.id === "DRAGGABLE") {
+      return;
+    }
+
+    const findItem = colorItems?.find((c) => c.id == event.active.id);
+    if (findItem) {
+      setInputColor(findItem.hex_color);
+    }
+
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    // setActiveItem(null);
+    // console.log(activeItem, colorItems);
+    if (colorItems === undefined) return;
+    const { active, over } = event;
+    console.log(active, over);
+
+    if (!over) {
+      return;
+    }
+
+    let activeId = active.id.toString();
+    let overId = over.id.toString();
+
+    if (overId == 'target') {
+      const last = colorItems.slice(-1);
+      if (last.length > 0) {
+        overId = last[0].id;
       }
-    })
+    }
+    if (activeId == "DRAGGABLE" && currentColorItem !== undefined) {
+      if (!colorItems.find((c) => c.id == getColorId(currentColorItem))) {
+        colorItems.push(currentColorItem);
+        activeId = currentColorItem.id;
+      }
+    }
+
+    const activeIndex = colorItems.findIndex((item) => item.id === activeId);
+    const overIndex = colorItems.findIndex((item) => item.id === overId);
+    if (activeIndex !== -1 && overIndex !== -1 && activeId !== overId) {
+      setColorItems((items) => arrayMove<ColorItem>(items || [], activeIndex, overIndex));
+    }
+
+  }
+
+  function getColorId (color: ColorItem | Color) {
+    if (color.name != undefined && color.name != "") {
+      return `${color.hex_color}_${color.name}`;
+    }
+    return color.hex_color;
   }
 
   useEffect(() => {
@@ -273,22 +335,45 @@ function ColorView() {
     setInputH(hsl.h);
     setInputS(hsl.s);
     setInputL(hsl.l);
-  }, [inputColor])
 
-  // useEffect(() => {
-  //   if (inputR === undefined || inputG === undefined || inputB === undefined) return;
-  //   const rgb: Rgb = {r: inputR, g: inputG, b: inputB};
-  //   setInputColor(fromColor(rgb))
-  // }, [inputR, inputG, inputB]);
-  //
-  // useEffect(() => {
-  //   if (inputH === undefined || inputS === undefined || inputL === undefined) return;
-  //   const hsl: Hsl = {h: inputH, s: inputS, l: inputL};
-  //   const rgb = hslToRgb(hsl);
-  //   setInputColor(fromColor(rgb));
-  // }, [inputH, inputS, inputL]);
+    let colorId;
+    if (colorName == undefined || colorName == "") {
+      colorId = inputColor;
+    } else {
+      colorId = `${inputColor}_${colorName}`;
+    }
+    setCurrentColorItem({
+      id: colorId,
+      hex_color: inputColor,
+      name: colorName,
+    });
+  }, [inputColor, colorName])
 
+  useEffect(() => {
+    if (colorsJson?.colors === undefined) return;
+    const colorItems: ColorItem[] = colorsJson.colors.map( (c: Color) => {
+      let colorId = getColorId(c);
+      console.log('colorId:', colorId);
 
+      return ({
+        id: colorId,
+        ...c
+      })
+    });
+    setColorItems(colorItems)
+  }, [colorsJson]);
+
+  useEffect(() => {
+    if (colorItems == undefined) return;
+
+    commands.writeColors({
+      colors: colorItems
+    }).then((res) => {
+      if (res.status == 'ok') {
+        console.log('save color');
+      }
+    })
+  }, [colorItems]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
@@ -323,20 +408,29 @@ function ColorView() {
         <div className="label-num">Y:</div><div className="input"><input type="number" value={inputY ?? ""} onChange={(e) => onChangeInputY(e.target.value)}/></div>
         <div className="icon" onClick={refreshPos}><Icon icon={faArrowsRotate} /></div>
       </div>
-      <div className="row">
-        <div className="icon" onClick={saveColorsJson}><Icon icon={faSquarePlus} /></div>
-      </div>
-      <div className="color-list">
-        {colorsJson?.colors.map((color: Color, index: number) => {
-          return (
-            <div className="color-item" key={index}>
-              <div className="color-bg" style={{backgroundColor: color.hex_color}} onClick={()=>setInputColor(color.hex_color)}></div>
-              <div className="color-txt" onClick={()=>setInputColor(color.hex_color)}>{color.hex_color}</div>
-              <div className="color-close" onClick={() => {removeColor(color.hex_color)}}><Icon icon={faCircleXmark} /></div>
-            </div>
-          )
-        })}
-      </div>
+      <DndContext
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}>
+          {(inputColor != undefined && currentColorItem != undefined) && (
+          <div className="row">
+            <div className="icon" onClick={addColor}><Icon icon={faSquarePlus} /></div>
+            <ColorCurItemView
+              color={currentColorItem}
+            />
+          </div>
+          )}
+        <SortableContainer id="target">
+          <div className="color-list">
+              <SortableContext items={colorItems ?? []} strategy={horizontalListSortingStrategy}>
+              {(colorItems ?? []).map((color, _index: number) => {
+                return (
+                  <ColorItemView key={color.id} color={color} removeColorItem={removeColorItem} />
+                )
+              })}
+              </SortableContext>
+          </div>
+        </SortableContainer>
+      </DndContext>
     </div>
   )
 }

@@ -25,6 +25,12 @@
       "properties": {
         "hex_color": {
           "type": "string"
+        },
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ]
         }
       },
       "required": [

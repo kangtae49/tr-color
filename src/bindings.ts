@@ -50,7 +50,7 @@ async writeColors(colorsJson: ColorsJson) : Promise<Result<null, ApiError>> {
 /** user-defined types **/
 
 export type ApiError = { Error: string } | { TauriError: string } | { Io: string } | { JsonError: string }
-export type Color = { hex_color: string }
+export type Color = { hex_color: string; name?: string | null }
 export type ColorsJson = { $schema?: string | null; colors: Color[] }
 export type Pos = { x: number; y: number }
 export type Rgb = { r: number; g: number; b: number }

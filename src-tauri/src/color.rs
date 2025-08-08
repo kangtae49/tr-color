@@ -26,12 +26,12 @@ pub struct Rgb {
     b: u8,
 }
 
-// #[skip_serializing_none]
+#[skip_serializing_none]
 #[serde_as]
 #[derive(Type, Serialize, Deserialize, JsonSchema, Clone, Debug)]
 pub struct Color {
     hex_color: String,
-    // desc: Option<String>,
+    name: Option<String>,
 }
 
 #[skip_serializing_none]
