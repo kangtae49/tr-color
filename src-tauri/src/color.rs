@@ -71,9 +71,6 @@ pub fn get_color(pos: Pos) -> Result<Rgb> {
 
 pub fn read_colors() -> Result<ColorsJson> {
     let resource_path = get_resource_path()?;
-    if !resource_path.exists() {
-        std::fs::create_dir_all(&resource_path)?;
-    }
     let json_path = resource_path.join("colors.json");
     let json_str = std::fs::read_to_string(json_path)?;
     let color_json: ColorsJson = serde_json::from_str(&json_str)?;
