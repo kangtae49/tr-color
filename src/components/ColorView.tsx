@@ -225,6 +225,11 @@ function ColorView() {
     commands.readColors().then((res) => {
       if (res.status === "ok") {
         setColorsJson(res.data);
+      } else {
+        // console.log('read colors error');
+        if (confirm("resources/ not found. create folder resources/ ?")) {
+          setColorItems([]);
+        }
       }
     });
   }
@@ -250,7 +255,7 @@ function ColorView() {
 
   function handleDragStart(event: DragStartEvent) {
     console.log(event);
-    if (event.active.id === "DRAGGABLE") {
+    if (event.active.id === "source") {
       return;
     }
 
@@ -273,7 +278,7 @@ function ColorView() {
     let activeId = active.id.toString();
     let overId = over.id.toString();
 
-    if (activeId == "DRAGGABLE" && currentColorItem !== undefined) {
+    if (activeId == "source" && currentColorItem !== undefined) {
       if (!colorItems.find((c) => c.id == getColorId(currentColorItem))) {
         colorItems.push(currentColorItem);
         // setColorItems(colorItems);
@@ -391,24 +396,24 @@ function ColorView() {
           {(inputColor != undefined && currentColorItem != undefined) && (
           <div className="row">
             <div className="icon" onClick={addColor}><Icon icon={faSquarePlus} /></div>
-            <ColorCurItemView
+            <ColorCurItemView id="source"
               color={currentColorItem}
             />
           </div>
           )}
-        { (colorItems != undefined) && (
           <SortableContainer id="target">
             <div className="color-list">
-                <SortableContext items={colorItems} strategy={horizontalListSortingStrategy}>
+              {(colorItems != undefined) && (
+              <SortableContext items={colorItems} strategy={horizontalListSortingStrategy}>
                 {(colorItems).map((color, _index: number) => {
                   return (
                     <ColorItemView key={color.id} color={color} removeColorItem={removeColorItem} />
                   )
                 })}
-                </SortableContext>
+              </SortableContext>
+              )}
             </div>
           </SortableContainer>
-        )}
         </DndContext>
     </div>
   )

@@ -6,14 +6,15 @@ import {useColorNameStore} from "@/stores/colorNameStore.ts";
 
 
 type Props = {
+  id: string,
   color: ColorItem
 }
-function ColorCurItemView({color}: Props) {
+function ColorCurItemView({id, color}: Props) {
   const colorName = useColorNameStore(state => state.colorName);
   const setColorName = useColorNameStore(state => state.setColorName);
 
   const draggable = useDraggable({
-    id: "DRAGGABLE"
+    id
   });
   const mergedProps = {
     ...draggable.attributes,

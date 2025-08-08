@@ -17,6 +17,7 @@ html, body, #root, .container {
 
   font-family: 'Consolas', 'Courier New', monospace;
   font-size: 0.8em;
+  overflow: hidden;
 }
 
 input, select {
@@ -52,7 +53,7 @@ div, input {
 .row .input input { width: 100%; cursor: pointer;}
 .row .icon { flex: 0 0 20px; width: 20px; height: 27px; font-size: 1.2em; display: flex; justify-content: center; align-items: center; cursor: pointer;}
 
-.color-pane .color-list-con { flex: 1; display: flex; }
+.color-pane .color-list-con { flex: 1; display: flex; overflow: auto;}
 .color-pane .color-list { flex: 1; border: 1px solid #ccc; display: flex; flex-wrap: wrap;  justify-content: flex-start; align-content: flex-start; overflow-y: auto;}
 .color-item { display: flex; padding: 3px; border: 1px solid #ccc; height: 30px; gap: 2px;}
 .color-item .color-bg { flex: 0 0 20px; border: 1px solid #ccc; cursor: pointer;}

@@ -16,6 +16,9 @@ pub enum ApiError {
 
     #[error("JSON error: {0}")]
     JsonError(String),
+
+    #[error("Win32 error: {0}")]
+    Win32Error(String),
 }
 
 impl From<tauri::Error> for ApiError {
@@ -41,3 +44,10 @@ impl From<std::string::FromUtf8Error> for ApiError {
         ApiError::Io(e.to_string())
     }
 }
+
+impl From<windows::core::Error> for ApiError {
+    fn from(e: windows::core::Error) -> Self {
+        ApiError::Win32Error(e.to_string())
+    }
+}
+
