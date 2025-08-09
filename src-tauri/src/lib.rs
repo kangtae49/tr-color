@@ -3,7 +3,7 @@ mod err;
 mod utils;
 
 use tauri_specta::{collect_commands, Builder};
-use crate::color::{Rgb, Pos, ColorsJson, ColorCapture};
+use crate::color::{Pos, ColorsJson, ColorCapture};
 use crate::err::Result;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/

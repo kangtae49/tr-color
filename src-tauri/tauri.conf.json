@@ -14,8 +14,8 @@
     "windows": [
       {
         "title": "tr-color",
-        "width": 303,
-        "height": 303,
+        "width": 400,
+        "height": 300,
         "devtools": true
       }
     ],
