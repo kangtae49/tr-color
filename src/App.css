@@ -41,10 +41,49 @@ div, input {
   height: 100%;
   padding: 5px;
 }
-.color-pane .info {text-overflow: ellipsis; white-space: nowrap;}
-.color-pane .row { display: flex; }
+
+.color-pane .ctrl-pane {display: flex;}
+.color-pane .ctrl-pane .left-pane {}
+.color-pane .ctrl-pane .right-pane {
+
+  display: flex;
+  justify-content: center; align-items: center;
+  border: 1px solid #ccc;
+  width: 123px;
+  height: 123px;
+}
 
 
+.left-pane .info {text-overflow: ellipsis; white-space: nowrap;}
+.left-pane .row { display: flex; }
+
+.right-pane .grid-color {
+  display: grid;
+  grid-template-columns: repeat(11, 1fr); /* 가로 11개 */
+  grid-template-rows: repeat(11, 1fr);    /* 세로 11개 */
+  gap: 0;
+  /*row-gap: 0;*/
+  row-gap: 0;
+  column-gap: 0;
+  grid-column-gap: 0;
+  grid-row-gap: 0;
+  width: 110px;
+  height: 110px;
+  /*width: 100%;*/
+  /*height: 100%;*/
+  padding: 0;
+  margin: 0;
+  /*max-width: 660px;*/
+}
+.right-pane .grid-color .box {
+  aspect-ratio: 1 / 1;
+  width: 10px;
+  height: 10px;
+  cursor: pointer;
+}
+
+.current-color { display: flex; padding-top: 3px;}
+.current-color .icon { flex: 0 0 20px; width: 20px; height: 27px; font-size: 1.2em; display: flex; justify-content: center; align-items: center; cursor: pointer;}
 
 .row .color { cursor: pointer; }
 .row .label-hex { flex: 0 0 60px; padding-right: 3px; display: flex; justify-content: center; align-items: center;}
@@ -53,8 +92,8 @@ div, input {
 .row .input input { width: 100%; cursor: pointer;}
 .row .icon { flex: 0 0 20px; width: 20px; height: 27px; font-size: 1.2em; display: flex; justify-content: center; align-items: center; cursor: pointer;}
 
-.color-pane .color-list-con { flex: 1; display: flex; overflow: auto;}
-.color-pane .color-list { flex: 1; border: 1px solid #ccc; display: flex; flex-wrap: wrap;  justify-content: flex-start; align-content: flex-start; overflow-y: auto;}
+.color-pane .colors-pane { flex: 1; display: flex; flex-direction: column; overflow: auto; height: 100%;}
+.colors-pane .color-list { flex: 1; border: 1px solid #ccc; display: flex; flex-wrap: wrap;  justify-content: flex-start; align-content: flex-start; overflow-y: auto;}
 .color-item { display: flex; padding: 3px; border: 1px solid #ccc; height: 30px; gap: 2px;}
 .color-item .color-bg { flex: 0 0 20px; border: 1px solid #ccc; cursor: pointer;}
 .color-item .color-hex { flex: 0 0 20px; display: flex; justify-content: center; align-items: center; cursor: pointer;}

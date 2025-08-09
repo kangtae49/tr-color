@@ -1,5 +1,5 @@
-import {useEffect, useState} from "react";
-import {Rgb, commands, Pos, Color, ColorsJson} from "../bindings.ts";
+import {useCallback, useEffect, useRef, useState} from "react";
+import {Rgb, commands, Color, ColorsJson} from "../bindings.ts";
 import { FontAwesomeIcon as Icon } from '@fortawesome/react-fontawesome'
 import {faArrowsRotate, faSquarePlus} from '@fortawesome/free-solid-svg-icons'
 import SortableContainer from "@/components/SortableContainer.tsx";
@@ -8,113 +8,27 @@ import {DndContext, DragEndEvent, DragStartEvent} from "@dnd-kit/core";
 import ColorItemView from "@/components/ColorItemView.tsx";
 import ColorCurItemView from "@/components/ColorCurItemView.tsx";
 import {useColorNameStore} from "@/stores/colorNameStore.ts";
+import {fromColor, fromHexColor, Hsl, hslToRgb, rgbToHsl} from "@/components/color.ts";
 
-
-function fromColor(rgb: Rgb): string {
-  const toHex = (v: number) => v.toString(16).padStart(2, '0');
-  return `#${toHex(rgb.r)}${toHex(rgb.g)}${toHex(rgb.b)}`;
-}
-
-function fromHexColor(hex: string): Rgb | undefined {
-  hex = hex.replace(/^#/, '');
-
-  if (hex.length !== 6) {
-    return undefined;
-  }
-
-  const r = parseInt(hex.slice(0, 2), 16);
-  const g = parseInt(hex.slice(2, 4), 16);
-  const b = parseInt(hex.slice(4, 6), 16);
-
-  return { r, g, b };
-}
-
-type Hsl = { h: number; s: number; l: number };
-
-function rgbToHsl(rgb: Rgb): Hsl {
-  let {r, g, b} = rgb;
-
-  r /= 255;
-  g /= 255;
-  b /= 255;
-
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  let h = 0, s = 0, l = (max + min) / 2;
-
-  if (max !== min) {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-
-    switch (max) {
-      case r:
-        h = ((g - b) / d + (g < b ? 6 : 0));
-        break;
-      case g:
-        h = ((b - r) / d + 2);
-        break;
-      case b:
-        h = ((r - g) / d + 4);
-        break;
-    }
-
-    h /= 6;
-  }
-
-  return {
-    h: Math.round(h * 360),    // Hue: 0~360
-    s: Math.round(s * 100),    // Saturation: 0~100%
-    l: Math.round(l * 100),    // Lightness: 0~100%
-  };
-}
-
-function hslToRgb(hsl: Hsl): Rgb {
-  let { h, s, l } = hsl;
-  s /= 100;
-  l /= 100;
-
-  const c = (1 - Math.abs(2 * l - 1)) * s;
-  const x = c * (1 - Math.abs((h / 60) % 2 - 1));
-  const m = l - c / 2;
-
-  let r, g, b;
-
-  if (h >= 0 && h < 60) {
-    r = c; g = x; b = 0;
-  } else if (h < 120) {
-    r = x; g = c; b = 0;
-  } else if (h < 180) {
-    r = 0; g = c; b = x;
-  } else if (h < 240) {
-    r = 0; g = x; b = c;
-  } else if (h < 300) {
-    r = x; g = 0; b = c;
-  } else {
-    r = c; g = 0; b = x;
-  }
-
-  return {
-    r: Math.round((r + m) * 255),
-    g: Math.round((g + m) * 255),
-    b: Math.round((b + m) * 255),
-  };
-}
 
 export type ColorItem = Color & {
   id: string
 }
 
 function ColorView() {
-  const [inputColor, setInputColor] = useState<string | undefined>("#000000");
-  const [inputHexString, setInputHexString] = useState<string | undefined>("#000000");
-  const [inputR, setInputR] = useState<number | undefined>(0);
-  const [inputG, setInputG] = useState<number | undefined>(0);
-  const [inputB, setInputB] = useState<number | undefined>(0);
-  const [inputH, setInputH] = useState<number | undefined>(0);
-  const [inputS, setInputS] = useState<number | undefined>(0);
-  const [inputL, setInputL] = useState<number | undefined>(0);
-  const [inputX, setInputX] = useState<number | undefined>(0);
-  const [inputY, setInputY] = useState<number | undefined>(0);
+  const [inputColor, setInputColor] = useState<string>("#000000");
+  const [inputColorRect, setInputColorRect] = useState<string[]>([]);
+  const [inputHexString, setInputHexString] = useState<string>("#000000");
+  const [inputR, setInputR] = useState<number>(0);
+  const [inputG, setInputG] = useState<number>(0);
+  const [inputB, setInputB] = useState<number>(0);
+  const [inputH, setInputH] = useState<number>(0);
+  const [inputS, setInputS] = useState<number>(0);
+  const [inputL, setInputL] = useState<number>(0);
+  const [inputX, setInputX] = useState<number>(0);
+  const [inputY, setInputY] = useState<number>(0);
+  const refInputX = useRef(inputX);
+  const refInputY = useRef(inputY);
   const [colorsJson, setColorsJson] = useState<ColorsJson | undefined>(undefined);
   const [colorItems, setColorItems] = useState<ColorItem[] | undefined>(undefined);
   const [currentColorItem, setCurrentColorItem] = useState<ColorItem | undefined>(undefined);
@@ -122,32 +36,37 @@ function ColorView() {
   const setColorName = useColorNameStore(state => state.setColorName);
 
 
-  const getPos = async () => {
-    return commands.getMousePos().then((res) => {
-      if (res.status === "ok") {
-        return res.data;
-      }
-    });
-  }
-
-  const getColor = async (pos: Pos) => {
-    return commands.getColor(pos).then((res) => {
-      if (res.status === "ok") {
-        return res.data;
-      }
-    })
-  }
+  // const getPos = async () => {
+  //   return commands.getMousePos().then((res) => {
+  //     if (res.status === "ok") {
+  //       return res.data;
+  //     }
+  //   });
+  // }
+  //
+  // const getColor = async (pos: Pos) => {
+  //   return commands.getColor(pos).then((res) => {
+  //     if (res.status === "ok") {
+  //       return res.data;
+  //     }
+  //   })
+  // }
 
   const getMouseColor = () => {
-    getPos().then((pos) => {
-      if (pos) {
-        setInputX(pos.x);
-        setInputY(pos.y);
-        getColor(pos).then((color) => {
-          if (color === undefined) return;
-          setInputColor(fromColor(color));
-        });
+    commands.getMousePos().then( (res) => {
+      if (res.status == "error") {
+        return;
       }
+      const pos = res.data;
+      setInputX(pos.x);
+      setInputY(pos.y);
+      commands.getColor(pos).then((res) => {
+        if (res.status == "ok") {
+          const color_capture = res.data;
+          setInputColor(fromColor(color_capture.center_rgb));
+          setInputColorRect(color_capture.rect_rgb.map(fromColor));
+        }
+      });
     });
   }
 
@@ -165,14 +84,19 @@ function ColorView() {
   }
 
   const refreshPos = () => {
-    if (inputX === undefined || inputY === undefined) return;
+    const inputX = refInputX.current;
+    const inputY = refInputY.current;
+    if (inputX === undefined || inputY === undefined) {
+      return;
+    }
     commands.getColor({
       x: inputX,
       y: inputY
     }).then((res) => {
       if (res.status === "ok") {
-        const color = res.data;
-        setInputColor(fromColor(color));
+        const color_capture = res.data;
+        setInputColor(fromColor(color_capture.center_rgb));
+        setInputColorRect(color_capture.rect_rgb.map(fromColor));
       }
     })
   }
@@ -193,40 +117,40 @@ function ColorView() {
     }
   }
 
-  const parseIntRange = (value: string | undefined, min: number, max: number): number | undefined => {
-    if (value == undefined || value == "") return undefined;
+  const parseIntRange = (value: string, min: number, max: number): number => {
+    if (value == undefined || value == "") return 0;
     let v = parseInt(value);
     v = Math.min(v, max);
     v = Math.max(v, min);
     return v;
   }
 
-  const parseInteger = (value: string | undefined): number | undefined => {
-    if (value == undefined || value == "") return undefined;
-    return parseInt(value);
+  const parseInteger = (value: string): number => {
+    return parseInt(value) || 0;
   }
 
-  const onChangeInputR = (r: string | undefined) => { setInputR(parseIntRange(r, 0, 255)) }
-  const onChangeInputG = (g: string | undefined) => { setInputG(parseIntRange(g, 0, 255)) }
-  const onChangeInputB = (b: string | undefined) => { setInputB(parseIntRange(b, 0, 255)) }
-  const onChangeInputH = (h: string | undefined) => { setInputH(parseIntRange(h, 0, 360)) }
-  const onChangeInputS = (s: string | undefined) => { setInputS(parseIntRange(s, 0, 100)) }
-  const onChangeInputL = (l: string | undefined) => { setInputL(parseIntRange(l, 0, 100)) }
-  const onChangeInputX = (x: string | undefined) => { setInputX(parseInteger(x)) }
-  const onChangeInputY = (y: string | undefined) => { setInputY(parseInteger(y)) }
+  const onChangeInputR = (r: string) => { setInputR(parseIntRange(r, 0, 255)) }
+  const onChangeInputG = (g: string) => { setInputG(parseIntRange(g, 0, 255)) }
+  const onChangeInputB = (b: string) => { setInputB(parseIntRange(b, 0, 255)) }
+  const onChangeInputH = (h: string) => { setInputH(parseIntRange(h, 0, 360)) }
+  const onChangeInputS = (s: string) => { setInputS(parseIntRange(s, 0, 100)) }
+  const onChangeInputL = (l: string) => { setInputL(parseIntRange(l, 0, 100)) }
+  const onChangeInputX = (x: string) => { setInputX(parseInteger(x)) }
+  const onChangeInputY = (y: string) => { setInputY(parseInteger(y)) }
 
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key == 'Alt') {
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key == 'Control') {
       getMouseColor();
+    } else if (e.key == 'Shift') {
+      refreshPos();
     }
-  }
+  }, [inputX, inputY])
 
   const readColors = () => {
     commands.readColors().then((res) => {
       if (res.status === "ok") {
         setColorsJson(res.data);
       } else {
-        // console.log('read colors error');
         if (confirm("resources/ not found. create folder resources/ ?")) {
           setColorItems([]);
         }
@@ -249,12 +173,10 @@ function ColorView() {
 
   const removeColorItem = (colorItem: ColorItem) => {
     if (colorItems === undefined) return;
-    console.log('remove color: ', colorItem);
     setColorItems(colorItems.filter((item: ColorItem) => item.id !== colorItem.id));
   }
 
   function handleDragStart(event: DragStartEvent) {
-    console.log(event);
     if (event.active.id === "source") {
       return;
     }
@@ -306,6 +228,13 @@ function ColorView() {
     }
     return color.hex_color;
   }
+
+  useEffect(() => {
+    if (inputX == undefined || inputY == undefined) return;
+    if (refInputX == undefined || refInputY == undefined) return;
+    refInputX.current = inputX;
+    refInputY.current = inputY;
+  }, [inputX, inputY]);
 
   useEffect(() => {
     if (inputColor === undefined) return;
@@ -367,41 +296,58 @@ function ColorView() {
 
   return (
     <div className="color-pane">
-      <div className="info">Move Mouse & Press Alt</div>
-      <div className="row">
-        <div className="input color"><input type="color" value={inputColor} onChange={(e)=> onChangeInputColor(e.target.value)}/></div>
-        <div className="input"><input type="text" value={inputHexString} onChange={(e) => onChangeInputHexString(e.target.value)}/></div>
-        <div className="input">{inputHexString?.toUpperCase()}</div>
-      </div>
-      <div className="row">
-        <div className="label-num">R:</div><div className="input"><input type="number" value={inputR ?? ""} min={0} max={255} onChange={(e) => onChangeInputR(e.target.value)} /></div>
-        <div className="label-num">G:</div><div className="input"><input type="number" value={inputG ?? ""} min={0} max={255} onChange={(e) => onChangeInputG(e.target.value)}/></div>
-        <div className="label-num">B:</div><div className="input"><input type="number" value={inputB ?? ""} min={0} max={255} onChange={(e) => onChangeInputB(e.target.value)}/></div>
-        <div className="icon" onClick={refreshRgb}><Icon icon={faArrowsRotate} /></div>
-      </div>
-      <div className="row">
-        <div className="label-num">H:</div><div className="input"><input type="number" value={inputH ?? ""} min={0} max={360} onChange={(e) => onChangeInputH(e.target.value)} /></div>
-        <div className="label-num">S:</div><div className="input"><input type="number" value={inputS ?? ""} min={0} max={100} onChange={(e) => onChangeInputS(e.target.value)}/></div>
-        <div className="label-num">L:</div><div className="input"><input type="number" value={inputL ?? ""} min={0} max={100} onChange={(e) => onChangeInputL(e.target.value)}/></div>
-        <div className="icon" onClick={refreshHls}><Icon icon={faArrowsRotate} /></div>
-      </div>
-      <div className="row">
-        <div className="label-num">X:</div><div className="input"><input type="number" value={inputX ?? ""} onChange={(e) => onChangeInputX(e.target.value)}/></div>
-        <div className="label-num">Y:</div><div className="input"><input type="number" value={inputY ?? ""} onChange={(e) => onChangeInputY(e.target.value)}/></div>
-        <div className="icon" onClick={refreshPos}><Icon icon={faArrowsRotate} /></div>
+      <div className="ctrl-pane">
+        <div className="left-pane">
+          <div className="info">Move Mouse & Press Ctrl</div>
+          <div className="row">
+            <div className="input color"><input type="color" value={inputColor} onChange={(e)=> onChangeInputColor(e.target.value)}/></div>
+            <div className="input"><input type="text" value={inputHexString} onChange={(e) => onChangeInputHexString(e.target.value)}/></div>
+            <div className="input">{inputHexString?.toUpperCase()}</div>
+          </div>
+          <div className="row">
+            <div className="label-num">R:</div><div className="input"><input type="number" value={inputR ?? ""} min={0} max={255} onChange={(e) => onChangeInputR(e.target.value)} /></div>
+            <div className="label-num">G:</div><div className="input"><input type="number" value={inputG ?? ""} min={0} max={255} onChange={(e) => onChangeInputG(e.target.value)}/></div>
+            <div className="label-num">B:</div><div className="input"><input type="number" value={inputB ?? ""} min={0} max={255} onChange={(e) => onChangeInputB(e.target.value)}/></div>
+            <div className="icon" onClick={() => refreshRgb()}><Icon icon={faArrowsRotate} /></div>
+          </div>
+          <div className="row">
+            <div className="label-num">H:</div><div className="input"><input type="number" value={inputH ?? ""} min={0} max={360} onChange={(e) => onChangeInputH(e.target.value)} /></div>
+            <div className="label-num">S:</div><div className="input"><input type="number" value={inputS ?? ""} min={0} max={100} onChange={(e) => onChangeInputS(e.target.value)}/></div>
+            <div className="label-num">L:</div><div className="input"><input type="number" value={inputL ?? ""} min={0} max={100} onChange={(e) => onChangeInputL(e.target.value)}/></div>
+            <div className="icon" onClick={() => refreshHls()}><Icon icon={faArrowsRotate} /></div>
+          </div>
+          <div className="row">
+            <div className="label-num">X:</div><div className="input"><input type="number" value={inputX ?? ""} onChange={(e) => onChangeInputX(e.target.value)}/></div>
+            <div className="label-num">Y:</div><div className="input"><input type="number" value={inputY ?? ""} onChange={(e) => onChangeInputY(e.target.value)}/></div>
+            <div className="icon" onClick={() => refreshPos()} title="Press Shift"><Icon icon={faArrowsRotate} /></div>
+          </div>
+
+        </div>
+        <div className="right-pane">
+          <div className="grid-color">
+            {inputColorRect?.map((hex_color, index) => {
+              return (
+                <div key={index} className="box"
+                     style={{backgroundColor: hex_color}}
+                     onClick={() => setInputColor(hex_color)}
+                ></div>
+              )
+            })}
+          </div>
+        </div>
       </div>
       <DndContext
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}>
-          {(inputColor != undefined && currentColorItem != undefined) && (
-          <div className="row">
-            <div className="icon" onClick={addColor}><Icon icon={faSquarePlus} /></div>
-            <ColorCurItemView id="source"
-              color={currentColorItem}
-            />
-          </div>
-          )}
           <SortableContainer id="target">
+            {(inputColor != undefined && currentColorItem != undefined) && (
+              <div className="current-color">
+                <div className="icon" onClick={addColor}><Icon icon={faSquarePlus} /></div>
+                <ColorCurItemView id="source"
+                                  color={currentColorItem}
+                />
+              </div>
+            )}
             <div className="color-list">
               {(colorItems != undefined) && (
               <SortableContext items={colorItems} strategy={horizontalListSortingStrategy}>

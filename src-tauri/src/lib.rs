@@ -3,7 +3,7 @@ mod err;
 mod utils;
 
 use tauri_specta::{collect_commands, Builder};
-use crate::color::{Rgb, Pos, ColorsJson};
+use crate::color::{Rgb, Pos, ColorsJson, ColorCapture};
 use crate::err::Result;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
@@ -16,7 +16,7 @@ async fn get_mouse_pos() -> Result<Pos> {
 
 #[tauri::command]
 #[specta::specta]
-async fn get_color(pos: Pos) -> Result<Rgb> {
+async fn get_color(pos: Pos) -> Result<ColorCapture> {
     color::get_color(pos)
 }
 

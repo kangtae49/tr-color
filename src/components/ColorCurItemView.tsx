@@ -49,7 +49,7 @@ function ColorCurItemView({id, color}: Props) {
         <div className="color-name"
         >
           <input type="text"
-                 value={colorName}
+                 value={colorName || ""}
                  onChange={(e) => setColorName(e.target.value)} />
         </div>
       </div>

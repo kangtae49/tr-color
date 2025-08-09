@@ -13,7 +13,7 @@ async getMousePos() : Promise<Result<Pos, ApiError>> {
     else return { status: "error", error: e  as any };
 }
 },
-async getColor(pos: Pos) : Promise<Result<Rgb, ApiError>> {
+async getColor(pos: Pos) : Promise<Result<ColorCapture, ApiError>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("get_color", { pos }) };
 } catch (e) {
@@ -51,6 +51,7 @@ async writeColors(colorsJson: ColorsJson) : Promise<Result<null, ApiError>> {
 
 export type ApiError = { Error: string } | { TauriError: string } | { Io: string } | { JsonError: string } | { Win32Error: string }
 export type Color = { hex_color: string; name?: string | null }
+export type ColorCapture = { center_rgb: Rgb; rect_rgb: Rgb[] }
 export type ColorsJson = { $schema?: string | null; colors: Color[] }
 export type Pos = { x: number; y: number }
 export type Rgb = { r: number; g: number; b: number }

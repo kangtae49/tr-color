@@ -35,6 +35,13 @@ pub struct Rgb {
     b: u8,
 }
 
+#[serde_as]
+#[derive(Type, Serialize, Deserialize, Clone, Debug)]
+pub struct ColorCapture {
+    center_rgb: Rgb,
+    rect_rgb: Vec<Rgb>,
+}
+
 #[skip_serializing_none]
 #[serde_as]
 #[derive(Type, Serialize, Deserialize, JsonSchema, Clone, Debug)]
@@ -60,7 +67,13 @@ pub fn get_mouse_pos() -> Result<Pos> {
     }
 }
 
-pub fn get_color(pos: Pos) -> Result<Rgb> {
+pub fn get_color(pos: Pos) -> Result<ColorCapture> {
+    let center_rgb = get_rgb(&pos)?;
+    let rect_rgb = get_rgb_rect(&pos)?;
+    Ok(ColorCapture {center_rgb, rect_rgb})
+}
+
+pub fn get_rgb(pos: &Pos) -> Result<Rgb> {
     let hwnd = unsafe { GetDesktopWindow() };
     let hdc = unsafe { GetDC(Option::from(hwnd)) };
 
@@ -78,14 +91,15 @@ pub fn get_color(pos: Pos) -> Result<Rgb> {
     Ok(color)
 }
 
-pub fn get_colors(pos: Pos) -> Result<Vec<Rgb>> {
+pub fn get_rgb_rect(pos: &Pos) -> Result<Vec<Rgb>> {
+    let hw = 5;
     let rect = Rect {
-        x: pos.x-10,
-        y: pos.y-10,
-        w: 21,
-        h: 21,
+        x: pos.x-hw,
+        y: pos.y-hw,
+        w: hw*2 + 1,
+        h: hw*2 + 1,
     };
-    
+
     let hwnd = unsafe { GetDesktopWindow() };
     let hdc = unsafe { GetDC(Option::from(hwnd)) };
 
@@ -93,7 +107,7 @@ pub fn get_colors(pos: Pos) -> Result<Vec<Rgb>> {
     let bmp = unsafe { CreateCompatibleBitmap(hdc, rect.w, rect.h) };
     unsafe { SelectObject(mem_dc, HGDIOBJ(bmp.0)) };
 
-    unsafe { BitBlt(mem_dc, rect.x, rect.y, rect.w, rect.h, Option::from(hdc), rect.x, rect.y, SRCCOPY) }?;
+    unsafe { BitBlt(mem_dc, 0, 0, rect.w, rect.h, Option::from(hdc), rect.x, rect.y, SRCCOPY) }?;
 
     let mut bmi = BITMAPINFO {
         bmiHeader: BITMAPINFOHEADER {

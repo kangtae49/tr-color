@@ -8,7 +8,7 @@ type Prop = {
 function SortableContainer({id, children}: Prop) {
   const { setNodeRef } = useDroppable({ id });
   return (
-    <div className="color-list-con" ref={setNodeRef} >
+    <div className="colors-pane" ref={setNodeRef} >
       {children}
     </div>
   )
