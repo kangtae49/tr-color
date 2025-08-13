@@ -139,7 +139,7 @@ function ColorView() {
   const onChangeInputY = (y: string) => { setInputY(parseInteger(y)) }
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key == 'Control') {
+    if (e.key == 'Alt') {
       getMouseColor();
     } else if (e.key == 'Shift') {
       refreshPos();
@@ -298,7 +298,7 @@ function ColorView() {
     <div className="color-pane">
       <div className="ctrl-pane">
         <div className="left-pane">
-          <div className="info">Move Mouse & Press Ctrl</div>
+          <div className="info">Move Mouse & Press Alt</div>
           <div className="row">
             <div className="input color"><input type="color" value={inputColor} onChange={(e)=> onChangeInputColor(e.target.value)}/></div>
             <div className="input"><input type="text" value={inputHexString} onChange={(e) => onChangeInputHexString(e.target.value)}/></div>
