@@ -2,12 +2,11 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, skip_serializing_none};
 use specta::Type;
+use tauri::Manager;
 use windows::Win32::Foundation::{POINT};
 use windows::Win32::Graphics::Gdi::{BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, DeleteDC, DeleteObject, GetDC, GetDIBits, GetPixel, ReleaseDC, SelectObject, BITMAPINFO, BITMAPINFOHEADER, BI_RGB, DIB_RGB_COLORS, HGDIOBJ, SRCCOPY};
 use windows::Win32::UI::WindowsAndMessaging::{GetCursorPos, GetDesktopWindow};
-
 use crate::err::ApiError;
-use crate::utils::get_resource_path;
 
 pub type Result<T> = std::result::Result<T, ApiError>;
 
@@ -157,21 +156,30 @@ pub fn get_rgb_rect(pos: &Pos) -> Result<Vec<Rgb>> {
     Ok(rgb_vec)
 }
 
-pub fn read_colors() -> Result<ColorsJson> {
-    let resource_path = get_resource_path()?;
-    let json_path = resource_path.join("colors.json");
+
+
+#[tauri::command]
+#[specta::specta]
+pub async fn read_colors(app_handle: tauri::AppHandle) -> Result<ColorsJson> {
+    let app_dir = app_handle.path().app_data_dir()?;
+    if !app_dir.exists() {
+        std::fs::create_dir_all(&app_dir)?;
+    }
+    let json_path = app_dir.join("colors.json");
     let json_str = std::fs::read_to_string(json_path)?;
     let color_json: ColorsJson = serde_json::from_str(&json_str)?;
     Ok(color_json)
 }
 
-pub fn write_colors(mut colors_json: ColorsJson) -> Result<()> {
+#[tauri::command]
+#[specta::specta]
+pub async fn write_colors(app_handle: tauri::AppHandle, mut colors_json: ColorsJson) -> Result<()> {
+    let app_dir = app_handle.path().app_data_dir()?;
     colors_json.schema = Some("./colors.schema.json".to_string());
-    let resource_path = get_resource_path()?;
-    if !resource_path.exists() {
-        std::fs::create_dir_all(&resource_path)?;
+    if !app_dir.exists() {
+        std::fs::create_dir_all(&app_dir)?;
     }
-    let json_path = resource_path.join("colors.json");
+    let json_path = app_dir.join("colors.json");
     let json_str = serde_json::to_string_pretty(&colors_json)?;
     std::fs::write(json_path, json_str)?;
     Ok(())
