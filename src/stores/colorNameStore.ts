@@ -8,5 +8,5 @@ export interface ColorNameStore {
 
 export const useColorNameStore = create<ColorNameStore>((set) => ({
   colorName: undefined,
-  setColorName: (colorName: string | undefined) => set(() => ({ colorName }))
+  setColorName: (colorName) => set(() => ({ colorName }))
 }))

@@ -10,8 +10,7 @@ type Props = {
   color: ColorItem
 }
 function ColorCurItemView({id, color}: Props) {
-  const colorName = useColorNameStore(state => state.colorName);
-  const setColorName = useColorNameStore(state => state.setColorName);
+  const {colorName, setColorName} = useColorNameStore();
 
   const draggable = useDraggable({
     id

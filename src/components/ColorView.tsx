@@ -32,8 +32,7 @@ function ColorView() {
   const [colorsJson, setColorsJson] = useState<ColorsJson | undefined>(undefined);
   const [colorItems, setColorItems] = useState<ColorItem[] | undefined>(undefined);
   const [currentColorItem, setCurrentColorItem] = useState<ColorItem | undefined>(undefined);
-  const colorName = useColorNameStore(state => state.colorName);
-  const setColorName = useColorNameStore(state => state.setColorName);
+  const {colorName, setColorName} = useColorNameStore();
 
 
   // const getPos = async () => {
